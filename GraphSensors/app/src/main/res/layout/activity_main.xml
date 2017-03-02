@@ -20,4 +20,10 @@
         android:layout_height="200dip"
         android:layout_below="@id/graphGyro"
         android:id="@+id/graphAccel" />
+
+    <com.jjoe64.graphview.GraphView
+        android:layout_width="match_parent"
+        android:layout_height="200dip"
+        android:layout_below="@id/graphAccel"
+        android:id="@+id/graphGravity" />
 </RelativeLayout>

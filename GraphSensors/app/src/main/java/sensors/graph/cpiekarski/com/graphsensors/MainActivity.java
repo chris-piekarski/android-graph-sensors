@@ -21,11 +21,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor mSensor;
     private GraphView mGraphGyro;
     private GraphView mGraphAccel;
+    private GraphView mGraphGravity;
     private LineGraphSeries<DataPoint> mSeriesGyroX, mSeriesGyroY, mSeriesGyroZ;
     private LineGraphSeries<DataPoint> mSeriesAccelX, mSeriesAccelY, mSeriesAccelZ;
+    private LineGraphSeries<DataPoint> mSeriesGravX, mSeriesGravY, mSeriesGravZ;
     private double graphLastGyroXValue = 5d;
     private double graphLastAccelXValue = 5d;
-
+    private double graphLastGravXValue = 5d;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +36,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         mGraphGyro = initGraph(R.id.graphGyro, "Sensor.TYPE_GYROSCOPE");
         mGraphAccel = initGraph(R.id.graphAccel, "Sensor.TYPE_ACCELEROMETER");
+        mGraphGravity = initGraph(R.id.graphGravity, "Sensor.TYPE_GRAVITY");
 
+        //GYRO
         mSeriesGyroX = initSeries(Color.BLUE, "X");
         mSeriesGyroY = initSeries(Color.RED, "Y");
         mSeriesGyroZ = initSeries(Color.GREEN, "Z");
@@ -45,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         startGyro();
 
+        // ACCEL
         mSeriesAccelX = initSeries(Color.BLUE, "X");
         mSeriesAccelY = initSeries(Color.RED, "Y");
         mSeriesAccelZ = initSeries(Color.GREEN, "Z");
@@ -54,6 +59,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mGraphAccel.addSeries(mSeriesAccelZ);
 
         startAccel();
+
+        // GRAVITY
+        mSeriesGravX = initSeries(Color.BLUE, "X");
+        mSeriesGravY = initSeries(Color.RED, "Y");
+        mSeriesGravZ = initSeries(Color.GREEN, "Z");
+
+        mGraphGravity.addSeries(mSeriesGravX);
+        mGraphGravity.addSeries(mSeriesGravY);
+        mGraphGravity.addSeries(mSeriesGravZ);
+
+        startGravity();
     }
 
     public GraphView initGraph(int id, String title) {
@@ -88,6 +104,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
+    public void startGravity(){
+        mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         //event.values[x,y,z]
@@ -101,6 +123,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             mSeriesAccelX.appendData(new DataPoint(graphLastAccelXValue, event.values[0]), true, 33);
             mSeriesAccelY.appendData(new DataPoint(graphLastAccelXValue, event.values[1]), true, 33);
             mSeriesAccelZ.appendData(new DataPoint(graphLastAccelXValue, event.values[2]), true, 33);
+        } else if(event.sensor.getType() == 9) {
+            graphLastGravXValue += 0.15d;
+            mSeriesGravX.appendData(new DataPoint(graphLastGravXValue, event.values[0]), true, 33);
+            mSeriesGravY.appendData(new DataPoint(graphLastGravXValue, event.values[1]), true, 33);
+            mSeriesGravZ.appendData(new DataPoint(graphLastGravXValue, event.values[2]), true, 33);
         }
         String dataString = String.valueOf(event.accuracy) + "," + String.valueOf(event.timestamp) + "," + String.valueOf(event.sensor.getType()) + "\n";
         Log.d(TAG, "Data received: " + dataString);
