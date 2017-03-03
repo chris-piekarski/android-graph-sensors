@@ -5,6 +5,7 @@ import android.os.Bundle;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.LegendRenderer;
 
 import android.content.Context;
 import android.hardware.Sensor;
@@ -22,21 +23,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private GraphView mGraphGyro;
     private GraphView mGraphAccel;
     private GraphView mGraphGravity;
+    private GraphView mGraphTemp;
     private LineGraphSeries<DataPoint> mSeriesGyroX, mSeriesGyroY, mSeriesGyroZ;
     private LineGraphSeries<DataPoint> mSeriesAccelX, mSeriesAccelY, mSeriesAccelZ;
     private LineGraphSeries<DataPoint> mSeriesGravX, mSeriesGravY, mSeriesGravZ;
+    private LineGraphSeries<DataPoint> mSeriesTemp;
     private double graphLastGyroXValue = 5d;
     private double graphLastAccelXValue = 5d;
     private double graphLastGravXValue = 5d;
+    private double graphLastTempXValue = 5d;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //TODO make this onCreate method not suck and subclass graphs and series
         mGraphGyro = initGraph(R.id.graphGyro, "Sensor.TYPE_GYROSCOPE");
         mGraphAccel = initGraph(R.id.graphAccel, "Sensor.TYPE_ACCELEROMETER");
         mGraphGravity = initGraph(R.id.graphGravity, "Sensor.TYPE_GRAVITY");
+        mGraphTemp = initGraph(R.id.graphTemp, "Sensor.TYPE_AMBIENT_TEMPERATURE");
 
         //GYRO
         mSeriesGyroX = initSeries(Color.BLUE, "X");
@@ -70,6 +76,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mGraphGravity.addSeries(mSeriesGravZ);
 
         startGravity();
+
+        // Temp
+        mSeriesTemp = initSeries(Color.RED, "Temp");
+        mGraphTemp.addSeries(mSeriesTemp);
+
+        startTemp();
     }
 
     public GraphView initGraph(int id, String title) {
@@ -79,6 +91,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         graph.getViewport().setMaxX(5);
         graph.getGridLabelRenderer().setLabelVerticalWidth(100);
         graph.setTitle(title);
+        graph.getGridLabelRenderer().setHorizontalLabelsVisible(false);
+        graph.getLegendRenderer().setVisible(true);
+        graph.getLegendRenderer().setAlign(LegendRenderer.LegendAlign.TOP);
         return graph;
     }
 
@@ -110,24 +125,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
+    public void startTemp(){
+        mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+        mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         //event.values[x,y,z]
-        if(event.sensor.getType() == 4) {
+        if(event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             graphLastGyroXValue += 0.15d;
             mSeriesGyroX.appendData(new DataPoint(graphLastGyroXValue, event.values[0]), true, 33);
             mSeriesGyroY.appendData(new DataPoint(graphLastGyroXValue, event.values[1]), true, 33);
             mSeriesGyroZ.appendData(new DataPoint(graphLastGyroXValue, event.values[2]), true, 33);
-        } else if(event.sensor.getType() == 1) {
+        } else if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             graphLastAccelXValue += 0.15d;
             mSeriesAccelX.appendData(new DataPoint(graphLastAccelXValue, event.values[0]), true, 33);
             mSeriesAccelY.appendData(new DataPoint(graphLastAccelXValue, event.values[1]), true, 33);
             mSeriesAccelZ.appendData(new DataPoint(graphLastAccelXValue, event.values[2]), true, 33);
-        } else if(event.sensor.getType() == 9) {
+        } else if(event.sensor.getType() == Sensor.TYPE_GRAVITY) {
             graphLastGravXValue += 0.15d;
             mSeriesGravX.appendData(new DataPoint(graphLastGravXValue, event.values[0]), true, 33);
             mSeriesGravY.appendData(new DataPoint(graphLastGravXValue, event.values[1]), true, 33);
             mSeriesGravZ.appendData(new DataPoint(graphLastGravXValue, event.values[2]), true, 33);
+        } else if(event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+            graphLastTempXValue += 0.15d;
+            mSeriesTemp.appendData(new DataPoint(graphLastTempXValue, event.values[0]), true, 33);
         }
         String dataString = String.valueOf(event.accuracy) + "," + String.valueOf(event.timestamp) + "," + String.valueOf(event.sensor.getType()) + "\n";
         Log.d(TAG, "Data received: " + dataString);
