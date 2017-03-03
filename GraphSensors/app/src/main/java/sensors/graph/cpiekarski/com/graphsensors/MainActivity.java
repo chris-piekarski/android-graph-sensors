@@ -24,14 +24,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private GraphView mGraphAccel;
     private GraphView mGraphGravity;
     private GraphView mGraphTemp;
+    private GraphView mGraphMag;
     private LineGraphSeries<DataPoint> mSeriesGyroX, mSeriesGyroY, mSeriesGyroZ;
     private LineGraphSeries<DataPoint> mSeriesAccelX, mSeriesAccelY, mSeriesAccelZ;
     private LineGraphSeries<DataPoint> mSeriesGravX, mSeriesGravY, mSeriesGravZ;
+    private LineGraphSeries<DataPoint> mSeriesMagX, mSeriesMagY, mSeriesMagZ;
     private LineGraphSeries<DataPoint> mSeriesTemp;
     private double graphLastGyroXValue = 5d;
     private double graphLastAccelXValue = 5d;
     private double graphLastGravXValue = 5d;
     private double graphLastTempXValue = 5d;
+    private double graphLastMagXValue = 5d;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mGraphAccel = initGraph(R.id.graphAccel, "Sensor.TYPE_ACCELEROMETER");
         mGraphGravity = initGraph(R.id.graphGravity, "Sensor.TYPE_GRAVITY");
         mGraphTemp = initGraph(R.id.graphTemp, "Sensor.TYPE_AMBIENT_TEMPERATURE");
+        mGraphMag = initGraph(R.id.graphMag, "Sensor.TYPE_MAGNETIC_FIELD");
 
         //GYRO
         mSeriesGyroX = initSeries(Color.BLUE, "X");
@@ -82,6 +86,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mGraphTemp.addSeries(mSeriesTemp);
 
         startTemp();
+
+        // Magnatic
+        mSeriesMagX = initSeries(Color.BLUE, "X");
+        mSeriesMagY = initSeries(Color.RED, "Y");
+        mSeriesMagZ = initSeries(Color.GREEN, "Z");
+
+        mGraphMag.addSeries(mSeriesMagX);
+        mGraphMag.addSeries(mSeriesMagY);
+        mGraphMag.addSeries(mSeriesMagZ);
+
+        startMag();
     }
 
     public GraphView initGraph(int id, String title) {
@@ -131,6 +146,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
+    public void startMag(){
+        mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -153,6 +174,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         } else if(event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
             graphLastTempXValue += 0.15d;
             mSeriesTemp.appendData(new DataPoint(graphLastTempXValue, event.values[0]), true, 33);
+        } else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+            graphLastMagXValue += 0.15d;
+            mSeriesMagX.appendData(new DataPoint(graphLastMagXValue, event.values[0]), true, 33);
+            mSeriesMagY.appendData(new DataPoint(graphLastMagXValue, event.values[1]), true, 33);
+            mSeriesMagZ.appendData(new DataPoint(graphLastMagXValue, event.values[2]), true, 33);
         }
         String dataString = String.valueOf(event.accuracy) + "," + String.valueOf(event.timestamp) + "," + String.valueOf(event.sensor.getType()) + "\n";
         Log.d(TAG, "Data received: " + dataString);
